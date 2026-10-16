@@ -21,6 +21,7 @@ version = rootProject.version
 
 repositories {
     mavenLocal() // TODO: remove when Flywheel is pushed
+    maven("https://maven.neoforged.net/releases") // Round 34: NeoForge config API for the common source set
     maven("https://maven.createmod.net") // Flywheel
     maven("https://raw.githubusercontent.com/Fuzss/modresources/main/maven/") // Forge Config API Port
 }
@@ -105,19 +106,48 @@ loom?.javaClass?.getMethod("splitEnvironmentSourceSets")?.run {
 extensions.getByType<PackageInfosExtension>().sources(sourceSets.named { it == "main" || it == "client" })
 
 if (name != "common") {
+    // Round 33: this named the root ":common" unconditionally, but a nested tree (":catnip:neoforge") consumes the
+    // output of its own sibling ":catnip:common". Gradle 9 rejects the undeclared dependency instead of warning.
+    val siblingCommon = project.path.substringBeforeLast(":") + ":common"
     tasks.withType<Jar> {
-        dependsOn(project(":common").tasks.named("generatePackageInfos"))
+        dependsOn(project(siblingCommon).tasks.named("generatePackageInfos"))
     }
 }
 
-// FIXME: temporary hack - disable everything config-related
+// Round 34: the upstream FIXME above this block excluded the entire configuration subsystem from compilation. It
+// was temporary, as it said, and Ponder PR #85 removes it wholesale rather than working around it - so this does the
+// same. The one exclusion that survives there is a generated package-info for a package that only exists once the
+// net.base sources are present.
+//
+// Every import those config sources need was checked against the 26.1.2 sources first: GuiGraphicsExtractor,
+// MouseButtonEvent, KeyEvent, ModConfigSpec and ModConfig all exist on this platform. The exclusion was not covering
+// a missing API.
+// Round 34: the same generated package-info that javac rejects also reaches the sources jar twice. PR #85 sets
+// this strategy for the same reason.
+tasks.withType<org.gradle.jvm.tasks.Jar> {
+    duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.EXCLUDE
+}
+
 tasks.withType<JavaCompile> {
-    exclude("**/config")
-    exclude("**/ConfigCommand.java")
-    exclude("**/ConfigPathArgument.java")
-    exclude("**/CClient.java")
-    exclude("**/PonderConfig.java")
-    exclude("**/ConfirmationScreen.java")
+    exclude("net/createmod/catnip/net/base/package-info.java")
+    // Round 34: the package-info generator emits one file per package per source set. A package that now has
+    // sources in both `common` and `neoforge` therefore gets two, and javac rejects the second with "package has
+    // already been annotated". The common one is authoritative; this drops the platform duplicate. Same class of
+    // problem as the net/base exclusion PR #85 carries, and the same remedy.
+    if (name != "common") {
+        exclude("net/createmod/catnip/api/platform/package-info.java")
+    }
+
+    // Round 34, deliberately narrow and deliberately temporary. The *common* configuration API - ConfigBase,
+    // ConfigHelper, ConfigPathArgument - is now compiled and is what Create actually depends on in 13 places. The
+    // client configuration *screens* still carry 26.1.2 GUI deltas that Ponder PR #85 resolved against 26.2
+    // (AbstractSimiScreen's constructor changed, and the entry widgets follow the new input event types), and
+    // porting a GUI layer was not on this round's critical path to a dedicated server.
+    //
+    // What this costs, stated exactly: Create's client sources reference BaseConfigScreen (3), ConfigScreen (1) and
+    // ConfigAnnotations (1). Create's *common* compile is unaffected; its client compile is not.
+    exclude("net/createmod/catnip/api/client/config/**")
+    exclude("net/createmod/catnip/api/client/gui/ConfirmationScreen.java")
 }
 
 when (name) {

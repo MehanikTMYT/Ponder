@@ -1,9 +1,11 @@
 [versions]
 minecraft = "26.1.2"
-flywheel = "1.0.6-beta"
+flywheel = "1.0.6-mc26.1"   # Round 33: coordinate scheme of the Flywheel 26.1.2 source we build
 
 # https://neoforged.net/
-neoforge = "26.1.2.75"
+neoforge = "26.1.2.114"
+fml-loader = "11.0.12"
+night-config = "3.8.3"
 mdg = "2.0.+"
 
 # https://fabricmc.net/develop/
@@ -22,12 +24,19 @@ fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fab
 mixin = { module = "net.fabricmc:sponge-mixin", version.ref = "mixin" }
 mixin-extras = { module = "io.github.llamalad7:mixinextras-common", version.ref = "mixin-extras" }
 
-flywheel-neoforge-api = { module = "dev.engine-room.flywheel:flywheel-neoforge-api-26.1", version.ref = "flywheel" }
-flywheel-neoforge = { module = "dev.engine-room.flywheel:flywheel-neoforge-26.1", version.ref = "flywheel" }
-flywheel-fabric-api = { module = "dev.engine-room.flywheel:flywheel-fabric-api-26.1", version.ref = "flywheel" }
-flywheel-fabric = { module = "dev.engine-room.flywheel:flywheel-fabric-26.1", version.ref = "flywheel" }
+neoforge = { module = "net.neoforged:neoforge", version.ref = "neoforge" }
+fml-loader = { module = "net.neoforged.fancymodloader:loader", version.ref = "fml-loader" }
+night-config-core = { module = "com.electronwill.night-config:core", version.ref = "night-config" }
+night-config-toml = { module = "com.electronwill.night-config:toml", version.ref = "night-config" }
+flywheel-neoforge-api = { module = "dev.engine-room.flywheel:flywheel-neoforge", version.ref = "flywheel" }
+flywheel-neoforge = { module = "dev.engine-room.flywheel:flywheel-neoforge", version.ref = "flywheel" }
+flywheel-fabric-api = { module = "dev.engine-room.flywheel:flywheel-fabric", version.ref = "flywheel" }
+flywheel-fabric = { module = "dev.engine-room.flywheel:flywheel-fabric", version.ref = "flywheel" }
 
 [bundles]
+# Round 34: the configuration subsystem lives in `common` but needs NeoForge's config API. Provided compile-only,
+# exactly as Ponder PR #85 does, so `common` stays loader-neutral at runtime.
+neoforge-config = [ "neoforge", "fml-loader", "night-config-core", "night-config-toml" ]
 fabric = [ "fabric-loader", "fabric-api" ]
 mixin = [ "mixin", "mixin-extras" ]
 
