@@ -1,5 +1,3 @@
-import net.createmod.pondergradle.nullability.PackageInfosExtension
-
 // convention plugin to apply to platform subprojects.
 
 plugins {
@@ -11,9 +9,9 @@ plugins {
 plugins.apply("net.createmod.ponder.gradle")
 plugins.apply("setup-git-hash")
 
-// set up name and group based on parent project, ex. net.createmod.ponder:ponder-fabric
-val modName: String = parent!!.name
-base.archivesName = "$modName-$name"
+// set coordinates based on parent project, ex. net.createmod.ponder:ponder-fabric
+val modName: String = project.name.substringBeforeLast("-")
+val platform: String = project.name.substringAfterLast("-")
 group = "net.createmod.$modName"
 
 // keep version synchronized with the root project
@@ -40,8 +38,7 @@ val libs: VersionCatalog = versionCatalogs.named("libs")
 fun versionOf(name: String): String {
     val version = libs.findVersion(name).get().toString()
 
-    // thank you fabric loader for mangling all non-release versions
-    // FIXME remove when on full 26.1
+    // normalize minecraft versions to semver on fabric because they still do that for some reason
     if (name == "minecraft" && project.name == "fabric")
         return version
             .replace("snapshot-", "alpha.")
@@ -84,9 +81,16 @@ if (parent!!.name != "testmod") {
         }
 
         repositories {
-            maven("https://maven.createmod.net") {
-                name = "create"
-                credentials(PasswordCredentials::class)
+            val mavenUsername = providers.environmentVariable("MAVEN_USERNAME")
+            val mavenPassword = providers.environmentVariable("MAVEN_PASSWORD")
+            if (mavenUsername.isPresent && mavenPassword.isPresent) {
+                maven {
+                    url = uri("https://maven.createmod.net")
+                    credentials {
+                        username = mavenUsername.get()
+                        password = mavenPassword.get()
+                    }
+                }
             }
         }
     }
@@ -99,8 +103,18 @@ val loom: Any? = extensions.findByName("loom")
 // I don't even know where to begin with compiling against loom here.
 loom?.javaClass?.getMethod("splitEnvironmentSourceSets")?.run {
     invoke(loom)
-    plugins.apply("register-client-jar")
+
+    // add an extra consumable sourceset for other client sourcesets to depend on
+    configurations.consumable("client")
+    sourceSets["client"].output.forEach {
+        artifacts.add("client", it) {
+            // this one doesn't preserve task dependencies for some reason, add them manually
+            builtBy(tasks.named("compileClientJava"), tasks.named("processClientResources"))
+        }
+    }
 }
+
+// generate package-infos for the main (and client, if present) sourceSet(s)
 
 // generate package-infos for the main (and client, if present) sourceSet(s)
 extensions.getByType<PackageInfosExtension>().sources(sourceSets.named { it == "main" || it == "client" })
@@ -150,7 +164,7 @@ tasks.withType<JavaCompile> {
     exclude("net/createmod/catnip/api/client/gui/ConfirmationScreen.java")
 }
 
-when (name) {
+when (platform) {
     "common" -> plugins.apply("provide-common")
     "fabric" -> plugins.apply("consume-common-split")
     else -> plugins.apply("consume-common-merged")
