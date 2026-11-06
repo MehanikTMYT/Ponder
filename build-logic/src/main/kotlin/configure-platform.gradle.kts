@@ -1,5 +1,7 @@
 // convention plugin to apply to platform subprojects.
 
+import net.createmod.pondergradle.nullability.PackageInfosExtension
+
 plugins {
     `java-library`
     `maven-publish`
@@ -113,8 +115,6 @@ loom?.javaClass?.getMethod("splitEnvironmentSourceSets")?.run {
         }
     }
 }
-
-// generate package-infos for the main (and client, if present) sourceSet(s)
 
 // generate package-infos for the main (and client, if present) sourceSet(s)
 extensions.getByType<PackageInfosExtension>().sources(sourceSets.named { it == "main" || it == "client" })
