@@ -159,16 +159,10 @@ tasks.withType<JavaCompile> {
         exclude("net/createmod/catnip/api/platform/package-info.java")
     }
 
-    // Round 34, deliberately narrow and deliberately temporary. The *common* configuration API - ConfigBase,
-    // ConfigHelper, ConfigPathArgument - is now compiled and is what Create actually depends on in 13 places. The
-    // client configuration *screens* still carry 26.1.2 GUI deltas that Ponder PR #85 resolved against 26.2
-    // (AbstractSimiScreen's constructor changed, and the entry widgets follow the new input event types), and
-    // porting a GUI layer was not on this round's critical path to a dedicated server.
-    //
-    // What this costs, stated exactly: Create's client sources reference BaseConfigScreen (3), ConfigScreen (1) and
-    // ConfigAnnotations (1). Create's *common* compile is unaffected; its client compile is not.
-    exclude("net/createmod/catnip/api/client/config/**")
-    exclude("net/createmod/catnip/api/client/gui/ConfirmationScreen.java")
+    // Round 34 (исторично): эти exclude приостанавливали компиляцию api/client/config/** и ConfirmationScreen,
+    // когда в дереве не было новой конфиг-системы апстрима. Round 37 (2026-11-06): мерж mc26.1/dev (+11)
+    // привёл impl/client/gui/config/*, которые ИМПОРТИРУЮТ эти классы — exclude ломал компиляцию
+    // ("package ... does not exist"). Удалены; если GUI-слои дельт26.1 vs 26.2 дадут ошибки — править точечно.
 }
 
 when (platform) {
