@@ -120,11 +120,18 @@ loom?.javaClass?.getMethod("splitEnvironmentSourceSets")?.run {
 extensions.getByType<PackageInfosExtension>().sources(sourceSets.named { it == "main" || it == "client" })
 
 if (name != "common") {
-    // Round 33: this named the root ":common" unconditionally, but a nested tree (":catnip:neoforge") consumes the
-    // output of its own sibling ":catnip:common". Gradle 9 rejects the undeclared dependency instead of warning.
-    val siblingCommon = project.path.substringBeforeLast(":") + ":common"
-    tasks.withType<Jar> {
-        dependsOn(project(siblingCommon).tasks.named("generatePackageInfos"))
+    // Round 35 (2026-11-06): flat-имена проектов в settings (":ponder-neoforge", ":catnip-neoforge"),
+    // поэтому sibling считается от имени проекта, а не от пути; findProject — защита от отсутствия.
+    // Round 36: sourcesJar читает и generatedPackageInfos/client → зависимость и от generateClientPackageInfos.
+    val siblingCommon = ":" + name.substringBeforeLast("-") + "-common"
+    val siblingProj = project.findProject(siblingCommon)
+    if (siblingProj != null) {
+        val pkgInfoTasks = siblingProj.tasks.matching {
+            it.name == "generatePackageInfos" || it.name == "generateClientPackageInfos"
+        }
+        tasks.withType<Jar> {
+            dependsOn(pkgInfoTasks)
+        }
     }
 }
 
