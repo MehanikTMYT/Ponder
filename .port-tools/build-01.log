@@ -1,0 +1,40 @@
+Calculating task graph as no cached configuration is available for tasks: :ponder-neoforge:build :ponder-common:build
+> Task :build-logic:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :build-logic:generateExternalPluginSpecBuilders
+> Task :build-logic:extractPrecompiledScriptPluginPlugins
+> Task :build-logic:generateScriptPluginAdapters
+> Task :build-logic:pluginDescriptors
+> Task :build-logic:processResources
+> Task :build-logic:compilePluginsBlocks
+> Task :build-logic:generatePrecompiledScriptPluginAccessors
+
+> Task :build-logic:compileKotlin
+e: file:///root/home/forks/worktrees/create-deps-26.1.2/ponder/build-logic/src/main/kotlin/configure-platform.gradle.kts:120:12 None of the following candidates is applicable:
+
+fun <T : Any> getByType(type: Class<T>): T
+fun <T : Any> getByType(type: TypeOf<T>): T
+e: file:///root/home/forks/worktrees/create-deps-26.1.2/ponder/build-logic/src/main/kotlin/configure-platform.gradle.kts:120:12 No value passed for parameter 'type'.
+e: file:///root/home/forks/worktrees/create-deps-26.1.2/ponder/build-logic/src/main/kotlin/configure-platform.gradle.kts:120:22 Unresolved reference 'PackageInfosExtension'.
+e: file:///root/home/forks/worktrees/create-deps-26.1.2/ponder/build-logic/src/main/kotlin/configure-platform.gradle.kts:120:47 Unresolved reference 'sources'.
+
+> Task :build-logic:compileKotlin FAILED
+
+[Incubating] Problems report is available at: file:///root/home/forks/worktrees/create-deps-26.1.2/ponder/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':build-logic:compileKotlin' (registered by plugin class 'org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapper').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2m 53s
+8 actionable tasks: 8 executed
+Configuration cache entry stored.
+EXIT=1
